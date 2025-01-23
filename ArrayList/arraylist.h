@@ -4,14 +4,6 @@
 # include "arraylist_struct.h"
 # include "arraylist_iterator.h"
 
-typedef struct arraylist {
-	void			*array;
-	size_t			size;
-	size_t			capacity;
-	unsigned int	data_size;
-	int 			(*comparator)(const void *, const void *);
-} ArrayList;
-
 # define DEFAULT_CAPACITY 100
 # define ALIST_OK 0
 # define ALIST_NULL -1

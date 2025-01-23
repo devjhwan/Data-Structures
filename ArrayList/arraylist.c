@@ -46,7 +46,7 @@ int	add_alist(ArrayList *list, void *data)
 	if (list->size == list->capacity && resize_alist(list) < 0)
 		return ALIST_RESIZE_FAIL -3;
 
-	char *target = list->array + (list->size * list->data_size);
+	char *target = (char *)list->array + (list->size * list->data_size);
 	memcpy(target, data, list->data_size);
 	list->size++;
 	return ALIST_OK;
@@ -61,7 +61,7 @@ int	add_index_alist(ArrayList *list, size_t index, void *data)
 	if (list->size == list->capacity && resize_alist(list) < 0)
 		return ALIST_RESIZE_FAIL -3;
 
-	char *target = list->array + (index * list->data_size);
+	char *target = (char *)list->array + (index * list->data_size);
 	if (index < list->size)
 		memmove(target + list->data_size, target, (list->size - index) * list->data_size);
 	memcpy(target, data, list->data_size);
@@ -76,7 +76,7 @@ int	set_alist(ArrayList *list, size_t index, void *object)
 	if (index >= list->size)
 		return ALIST_INDEX_OUT_OF_BOUNDS;
 
-	char *target = list->array + (index * list->data_size);
+	char *target = (char *)list->array + (index * list->data_size);
 	memcpy(target, object, list->data_size);
 	return ALIST_OK;
 }
@@ -88,7 +88,7 @@ int	get_alist(ArrayList *list, size_t index, void *output)
 	if (index >= list->size)
 		return ALIST_INDEX_OUT_OF_BOUNDS;
 
-	char *source = list->array + (index * list->data_size);
+	char *source = (char *)list->array + (index * list->data_size);
 	memcpy(output, source, list->data_size);
 	return ALIST_OK;
 }
@@ -114,7 +114,7 @@ static void remove_element(ArrayList *list, char *target)
 	if (remaining_bytes > 0)
 		memmove(target, target + list->data_size, remaining_bytes);
 
-	memset(list->array + (list->size - 1) * list->data_size, 0, list->data_size);
+	memset((char *)list->array + (list->size - 1) * list->data_size, 0, list->data_size);
 	list->size--;
 	shrink_alist(list);
 }
@@ -126,7 +126,7 @@ int	remove_alist(ArrayList *list, size_t index, void *output)
 	if (index >= list->size)
 		return ALIST_INDEX_OUT_OF_BOUNDS;
 
-	char *target = list->array + (index * list->data_size);
+	char *target = (char *)list->array + (index * list->data_size);
 	if (output != NULL)
 		memcpy(output, target, list->data_size);
 	remove_element(list, target);
@@ -139,7 +139,7 @@ int	remove_object_alist(ArrayList *list, void *object)
 		return ALIST_NULL;
 
 	char *target;
-	char *end = list->array + (list->size * list->data_size);
+	char *end = (char *)list->array + (list->size * list->data_size);
 	for (target = list->array; target < end; target += list->data_size)
 		if (memcmp(target, object, list->data_size) == 0)
 			break;
@@ -191,7 +191,7 @@ long long	last_indexOf_alist(ArrayList *list, void *object, int (*comparator)(co
 ArrayList	*clone_alist(ArrayList *list)
 {
 	if (list == NULL || list->array == NULL)
-		return ALIST_NULL;
+		return NULL;
 
 	ArrayList	*newList = (ArrayList *)malloc(sizeof(ArrayList));
 	if (newList == NULL)
@@ -262,7 +262,7 @@ void free_alist_with_destructor(ArrayList **list, void (*destructor)(void *))
 
 	if (destructor != NULL)
 	{
-		char *end = (*list)->array + ((*list)->size * (*list)->data_size);
+		char *end = (char *)(*list)->array + ((*list)->size * (*list)->data_size);
 		for (char *index = (*list)->array; index < end; index += (*list)->data_size)
 			destructor(index);
 	}
