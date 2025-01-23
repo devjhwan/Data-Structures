@@ -1,6 +1,8 @@
 #include "arraylist.h"
+#include <stdint.h>
+#include <string.h>
 
-ArrayList	*create_arraylist(const unsigned int data_size)
+ArrayList	*create_arraylist(const unsigned int data_size, unsigned int initial_capacity)
 {
 	ArrayList	*list = (ArrayList *)malloc(sizeof(ArrayList));
 	if (list == NULL)
@@ -8,7 +10,7 @@ ArrayList	*create_arraylist(const unsigned int data_size)
 
 	list->size = 0;
 	list->data_size = data_size;
-	list->capacity = 100;
+	list->capacity = (initial_capacity > 0) ? initial_capacity : DEFAULT_CAPACITY;
 	list->array = malloc(list->capacity * list->data_size);
 	if (list->array == NULL)
 	{
@@ -18,69 +20,178 @@ ArrayList	*create_arraylist(const unsigned int data_size)
 	return list;
 }
 
+static int	resize_alist(ArrayList *list)
+{
+	size_t new_capacity;
+
+	if (list == NULL || list->array == NULL)
+		return ALIST_NULL;
+	if (list->capacity >= SIZE_MAX / list->data_size / 2)
+		return ALIST_RESIZE_FAIL;
+	else
+		new_capacity = list->capacity << 1;
+
+	void *new_array = realloc(list->array, new_capacity * list->data_size);
+	if (new_array == NULL)
+		return ALIST_NULL;
+	list->capacity = new_capacity;
+	list->array = new_array;
+	return ALIST_OK;
+}
+
 int	add_alist(ArrayList *list, void *data)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
-	if (list->size == list->capacity)
-	{
-		void *new_array = realloc(list->array, list->capacity * list->data_size * 2);
-		if (new_array == NULL)
-			return -2;
-		list->capacity <<= 1;
-		list->array = new_array;
-	}
+		return ALIST_NULL;
+	if (list->size == list->capacity && resize_alist(list) < 0)
+		return ALIST_RESIZE_FAIL -3;
 
-	void *target = list->array + (list->size * list->data_size);
+	char *target = list->array + (list->size * list->data_size);
 	memcpy(target, data, list->data_size);
 	list->size++;
-	return 0;
+	return ALIST_OK;
 }
 
 int	add_index_alist(ArrayList *list, size_t index, void *data)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
+		return ALIST_NULL;
 	if (index > list->size)
-		return -2;
-	if (list->size == list->capacity)
-	{
-		list->capacity *= 1.2;
-		list->array = realloc(list->array, list->capacity * list->data_size);
-	}
+		return ALIST_INDEX_OUT_OF_BOUNDS;
+	if (list->size == list->capacity && resize_alist(list) < 0)
+		return ALIST_RESIZE_FAIL -3;
 
-	void *target = list->array + (index * list->data_size);
+	char *target = list->array + (index * list->data_size);
 	if (index < list->size)
 		memmove(target + list->data_size, target, (list->size - index) * list->data_size);
 	memcpy(target, data, list->data_size);
 	list->size++;
-	return 0;
+	return ALIST_OK;
+}
+
+int	set_alist(ArrayList *list, size_t index, void *object)
+{
+	if (list == NULL || list->array == NULL)
+		return ALIST_NULL;
+	if (index >= list->size)
+		return ALIST_INDEX_OUT_OF_BOUNDS;
+
+	char *target = list->array + (index * list->data_size);
+	memcpy(target, object, list->data_size);
+	return ALIST_OK;
 }
 
 int	get_alist(ArrayList *list, size_t index, void *output)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
+		return ALIST_NULL;
 	if (index >= list->size)
-		return -2;
+		return ALIST_INDEX_OUT_OF_BOUNDS;
 
-	void *source = list->array + (index * list->data_size);
+	char *source = list->array + (index * list->data_size);
 	memcpy(output, source, list->data_size);
-	return 0;
+	return ALIST_OK;
+}
+
+static void shrink_alist(ArrayList *list)
+{
+	if (list->capacity > DEFAULT_CAPACITY && list->size < list->capacity / 4)
+	{
+		size_t new_capacity = list->capacity / 2;
+		void *new_array = realloc(list->array, new_capacity * list->data_size);
+		if (new_array != NULL)
+		{
+			list->array = new_array;
+			list->capacity = new_capacity;
+		}
+	}
+}
+
+static void remove_element(ArrayList *list, char *target)
+{
+	size_t remaining_bytes = (size_t)((char *)list->array + (list->size * list->data_size) - (target + list->data_size));
+
+	if (remaining_bytes > 0)
+		memmove(target, target + list->data_size, remaining_bytes);
+
+	memset(list->array + (list->size - 1) * list->data_size, 0, list->data_size);
+	list->size--;
+	shrink_alist(list);
+}
+
+int	remove_alist(ArrayList *list, size_t index, void *output)
+{
+	if (list == NULL || list->array == NULL)
+		return ALIST_NULL;
+	if (index >= list->size)
+		return ALIST_INDEX_OUT_OF_BOUNDS;
+
+	char *target = list->array + (index * list->data_size);
+	if (output != NULL)
+		memcpy(output, target, list->data_size);
+	remove_element(list, target);
+	return ALIST_OK;
+}
+
+int	remove_object_alist(ArrayList *list, void *object)
+{
+	if (list == NULL || list->array == NULL)
+		return ALIST_NULL;
+
+	char *target;
+	char *end = list->array + (list->size * list->data_size);
+	for (target = list->array; target < end; target += list->data_size)
+		if (memcmp(target, object, list->data_size) == 0)
+			break;
+	if (target >= end)
+		return ALIST_INDEX_OUT_OF_BOUNDS;
+	remove_element(list, target);
+	return ALIST_OK;
 }
 
 int	clear_alist(ArrayList *list)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
-	memset(list->array, 0, list->capacity * list->data_size);
+		return ALIST_NULL;
 	list->size = 0;
+	memset(list->array, 0, list->capacity * list->data_size);
+	return ALIST_OK;
+}
+
+static long long find_element(ArrayList *list, void *object, int (*comparator)(const void *, const void *), int reverse)
+{
+	if (list == NULL || list->array == NULL)
+		return ALIST_NULL;
+
+	size_t i = reverse ? list->size : 0;
+	while (reverse ? i-- : i < list->size)
+	{
+		char *current = (char *)list->array + (i * list->data_size);
+		if ((comparator && comparator(current, object) == 0) || (!comparator && memcmp(current, object, list->data_size) == 0))
+			return i;
+	}
+	return ALIST_INDEX_OUT_OF_BOUNDS;
+}
+
+int	contains_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
+{
+	return find_element(list, object, comparator, 0) >= 0 ? TRUE : FALSE;
+}
+
+long long	indexOf_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
+{
+	return find_element(list, object, comparator, 0);
+}
+
+long long	last_indexOf_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
+{
+	return find_element(list, object, comparator, 1);
 }
 
 ArrayList	*clone_alist(ArrayList *list)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
+		return ALIST_NULL;
 
 	ArrayList	*newList = (ArrayList *)malloc(sizeof(ArrayList));
 	if (newList == NULL)
@@ -90,137 +201,73 @@ ArrayList	*clone_alist(ArrayList *list)
 	newList->data_size = list->data_size;
 	newList->capacity = list->capacity;
 	newList->array = malloc(list->capacity * list->data_size);
-	if (list->array == NULL)
+	if (newList->array == NULL)
 	{
-		free(list);
+		free(newList);
 		return NULL;
 	}
 
-	memcpy(newList->array, list->array, list->size * list->data_size);
+	if (list->size > 0)
+		memcpy(newList->array, list->array, list->size * list->data_size);
 	return newList;
 }
 
-int	contains_alist(ArrayList *list, void *object)
+int	isEmpty_alist(ArrayList *list)
 {
-	if (list == NULL || list->array == NULL)
-		return -1;
-	
-	void *end = list->size * list->data_size;
-	for (void *index = list->array; index < end; index += list->data_size)
-	{
-		if (memcmp(index, object, list->data_size) == 0)
-			return 1;
-	}
-	return 0;
-}
-
-long long	indexOf_alist(ArrayList *list, void *object)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-	
-	void *end = list->size * list->data_size;
-	for (void *index = list->array; index < end; index += list->data_size)
-	{
-		if (memcmp(index, object, list->data_size) == 0)
-			return (long long)((index - list->array) / list->data_size);
-	}
-	return -2;
-}
-
-int isEmpty_alist(ArrayList *list)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-
-	if (list->size == 0)
-		return 1;
-	return 0;
-}
-
-long long	last_indexOf_alist(ArrayList *list, void *object)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-
-	void *last_index = -2;
-
-	for (void *index = list->array; index < (list->size * list->data_size); index += list->data_size)
-	{
-		if (memcmp(index, object, list->data_size) == 0)
-			last_index = (long long)((index - list->array) / list->data_size);
-	}
-	return last_index;
-}
-
-int	remove_alist(ArrayList *list, size_t index, void *output)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-	if (index > list->size)
-		return -2;
-
-	void *target = list->array + (index * list->data_size);
-	if (output != NULL)
-		memcpy(output, target, list->data_size);
-
-	memmove(target, target + list->data_size, (list->size - index - 1) * list->data_size);
-
-	target = list->array + (list->size * list->data_size);
-	memset(target, 0, list->data_size);
-	list->size--;
-	return 0;
-}
-
-int	remove_object_alist(ArrayList *list, void *object)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-
-	void *target;
-	for (target = list->array; target < (list->size * list->data_size); target += list->data_size)
-	{
-		if (memcmp(target, object, list->data_size) == 0)
-			break;
-	}
-	if (target == (list->size * list->data_size))
-		return -2;
-
-	memmove(target, target + list->data_size, (list->size - 1) * list->data_size - (size_t)target);
-
-	target = list->array + (list->size * list->data_size);
-	memset(target, 0, list->data_size);
-	list->size--;
-	return 0;
-}
-
-int	set_alist(ArrayList *list, size_t index, void *object)
-{
-	if (list == NULL || list->array == NULL)
-		return -1;
-	if (index > list->size)
-		return -2;
-
-	void *target = list->array + (index * list->data_size);
-	memcpy(target, object, list->data_size);
-	return 0;
+	return (list == NULL || list->array == NULL || list->size == 0);
 }
 
 size_t	size_alist(ArrayList *list)
 {
 	if (list == NULL || list->array == NULL)
-		return -1;
+		return 0;
 	
 	return list->size;
 }
 
+int	sort_alist(ArrayList *list, int (*comparator)(const void *, const void *))
+{
+	if (list == NULL || list->array == NULL || comparator == NULL)
+		return ALIST_NULL;
+
+	qsort(list->array, list->size, list->data_size, comparator);
+	return ALIST_OK;
+}
+
+int	binary_search_alist(ArrayList *list, void *key, int (*comparator)(const void *, const void *))
+{
+	if (list == NULL || list->array == NULL || comparator == NULL)
+		return ALIST_NULL;
+
+	void *result = bsearch(key, list->array, list->size, list->data_size, comparator);
+	if (result == NULL)
+		return ALIST_INDEX_OUT_OF_BOUNDS;
+
+	return (int)(((char *)result - (char *)list->array) / list->data_size);
+}
+
 void	free_alist(ArrayList **list)
 {
-	if (*list != NULL)
+	if (list == NULL || *list == NULL)
+		return ;
+	free((*list)->array);
+	free(*list);
+	*list = NULL;
+}
+
+void free_alist_with_destructor(ArrayList **list, void (*destructor)(void *))
+{
+	if (list == NULL || *list == NULL)
+		return;
+
+	if (destructor != NULL)
 	{
-		free((*list)->array);
-		(*list)->array = NULL;
+		char *end = (*list)->array + ((*list)->size * (*list)->data_size);
+		for (char *index = (*list)->array; index < end; index += (*list)->data_size)
+			destructor(index);
 	}
+
+	free((*list)->array);
 	free(*list);
 	*list = NULL;
 }
