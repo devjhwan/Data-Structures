@@ -8,12 +8,6 @@ typedef struct arraylist {
 	size_t			size;
 	size_t			capacity;
 	unsigned int	data_size;
-	int 			(*comparator)(const void *, const void *);
 } ArrayList;
-
-typedef struct {
-    ArrayList *list;
-    size_t index;
-} ArrayListIterator;
 
 #endif

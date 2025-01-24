@@ -1,6 +1,6 @@
 #include "arraylist_iterator.h"
 
-ArrayListIterator	*create_iterator(ArrayList *list)
+ArrayListIterator	*create_iterator_alist(ArrayList *list)
 {
 	if (list == NULL || list->array == NULL)
 		return NULL;
@@ -14,7 +14,7 @@ ArrayListIterator	*create_iterator(ArrayList *list)
 	return iterator;
 }
 
-void	*next(ArrayListIterator *iterator)
+void	*next_alist(ArrayListIterator *iterator)
 {
 	if (iterator == NULL || iterator->index >= iterator->list->size)
 		return NULL;
@@ -22,7 +22,11 @@ void	*next(ArrayListIterator *iterator)
 	return (char *)iterator->list->array + (iterator->index++ * iterator->list->data_size);
 }
 
-void	free_iterator(ArrayListIterator *iterator)
+void	free_iterator_alist(ArrayListIterator **iterator)
 {
-	free(iterator);
+	if (iterator != NULL)
+	{
+		free(*iterator);
+		*iterator = NULL;
+	}
 }

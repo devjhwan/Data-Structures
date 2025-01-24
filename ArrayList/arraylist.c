@@ -83,7 +83,7 @@ int	set_alist(ArrayList *list, size_t index, void *object)
 
 int	get_alist(ArrayList *list, size_t index, void *output)
 {
-	if (list == NULL || list->array == NULL)
+	if (list == NULL || list->array == NULL || output == NULL)
 		return ALIST_NULL;
 	if (index >= list->size)
 		return ALIST_INDEX_OUT_OF_BOUNDS;
@@ -178,12 +178,12 @@ int	contains_alist(ArrayList *list, void *object, int (*comparator)(const void *
 	return find_element(list, object, comparator, 0) >= 0 ? TRUE : FALSE;
 }
 
-long long	indexOf_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
+long long	index_of_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
 {
 	return find_element(list, object, comparator, 0);
 }
 
-long long	last_indexOf_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
+long long	last_index_of_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
 {
 	return find_element(list, object, comparator, 1);
 }
@@ -210,19 +210,6 @@ ArrayList	*clone_alist(ArrayList *list)
 	if (list->size > 0)
 		memcpy(newList->array, list->array, list->size * list->data_size);
 	return newList;
-}
-
-int	isEmpty_alist(ArrayList *list)
-{
-	return (list == NULL || list->array == NULL || list->size == 0);
-}
-
-size_t	size_alist(ArrayList *list)
-{
-	if (list == NULL || list->array == NULL)
-		return 0;
-	
-	return list->size;
 }
 
 int	sort_alist(ArrayList *list, int (*comparator)(const void *, const void *))

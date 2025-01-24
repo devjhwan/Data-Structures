@@ -1,2 +1,4 @@
 .obj/
 libarraylist.a
+main.o
+unit_test
