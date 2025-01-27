@@ -17,7 +17,7 @@ $(OBJ_DIR)/%.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
-	mkdir -p .obj
+	mkdir -p $@
 
 clean:
 	rm -rf $(OBJ_DIR)

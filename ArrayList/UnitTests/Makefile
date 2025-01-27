@@ -6,11 +6,12 @@ LIB_DIR = $(ARRAYLIST_DIR)
 INCLUDE_DIR = $(ARRAYLIST_DIR)
 LIBRARY = $(LIB_DIR)/libarraylist.a
 
-SRCS = main.c
-OBJS = $(SRCS:.c=.o)
+SRCS = main.c unit_test.c
+OBJ_DIR = .obj
+OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 TARGET = unit_test
 
-all: $(TARGET)
+all: $(OBJ_DIR) $(TARGET)
 
 $(TARGET): $(OBJS) $(LIBRARY)
 	$(CC) $(CFLAGS) -o $@ $^ -L$(LIB_DIR) -larraylist
@@ -18,11 +19,14 @@ $(TARGET): $(OBJS) $(LIBRARY)
 $(LIBRARY):
 	make -C $(ARRAYLIST_DIR)
 
-%.o: %.c
+$(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
+$(OBJ_DIR):
+	mkdir -p $@
+
 clean:
-	rm -f $(OBJS)
+	rm -rf $(OBJ_DIR)
 	make -C $(ARRAYLIST_DIR) fclean
 
 fclean: clean
