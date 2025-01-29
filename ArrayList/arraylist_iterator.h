@@ -11,6 +11,7 @@ typedef struct {
 
 ArrayListIterator	*create_iterator_alist(ArrayList *list);
 void				*next_alist(ArrayListIterator *iterator);
+void                *reset_iterator_alist(ArrayListIterator *iterator);
 void				free_iterator_alist(ArrayListIterator **iterator);
 
 #endif

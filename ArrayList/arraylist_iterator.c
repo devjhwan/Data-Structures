@@ -22,6 +22,14 @@ void	*next_alist(ArrayListIterator *iterator)
 	return (char *)iterator->list->array + (iterator->index++ * iterator->list->data_size);
 }
 
+void	*reset_iterator_alist(ArrayListIterator *iterator)
+{
+	if (iterator == NULL)
+		return NULL;
+	iterator->index = 0;
+	return (void *)iterator;
+}
+
 void	free_iterator_alist(ArrayListIterator **iterator)
 {
 	if (iterator != NULL)

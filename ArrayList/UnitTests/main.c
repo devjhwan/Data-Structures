@@ -40,17 +40,23 @@ int main(void)
     UnitTestFunc* unit_tests;
     
     unit_tests = create_unit_test_list(
-                    UnitTest1, UnitTest2, NULL);
+                    UnitTest1, UnitTest2, UnitTest3, UnitTest4,
+                    UnitTest5, UnitTest6, UnitTest7, NULL);
     if (!unit_tests)
         return -1;
 
     for (int i = 0; unit_tests[i] != NULL; i++) {
         if (unit_tests[i]() == ERROR) {
+            printf("Get unexpected error from UnitTest %d.", i + 1);
             free(unit_tests);
             return -1;
         }
         if (unit_tests[i + 1] != NULL)
+        {
             printf("\n");
+            printf("--------------------------------------------------\n");
+            printf("\n");
+        }
     }
     free(unit_tests);
     return 0;

@@ -11,7 +11,7 @@ OBJ_DIR = .obj
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRCS:.c=.o))
 TARGET = unit_test
 
-all: $(OBJ_DIR) $(TARGET)
+all: $(OBJ_DIR) $(LIBRARY) $(TARGET)
 
 $(TARGET): $(OBJS) $(LIBRARY)
 	$(CC) $(CFLAGS) -o $@ $^ -L$(LIB_DIR) -larraylist
@@ -27,11 +27,15 @@ $(OBJ_DIR):
 
 clean:
 	rm -rf $(OBJ_DIR)
+	rm -f output
 	make -C $(ARRAYLIST_DIR) fclean
 
 fclean: clean
 	rm -f $(TARGET)
 
 re: fclean all
+
+run: all
+	./$(TARGET) > output
 
 .PHONY: all clean fclean re

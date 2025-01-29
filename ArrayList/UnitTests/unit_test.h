@@ -6,5 +6,10 @@
 
 int UnitTest1();
 int UnitTest2();
+int UnitTest3();
+int UnitTest4();
+int UnitTest5();
+int UnitTest6();
+int UnitTest7();
 
 #endif

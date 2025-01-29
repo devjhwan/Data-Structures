@@ -163,8 +163,8 @@ static long long find_element(ArrayList *list, void *object, int (*comparator)(c
 	if (list == NULL || list->array == NULL)
 		return ALIST_NULL;
 
-	size_t i = reverse ? list->size : 0;
-	while (reverse ? i-- : i < list->size)
+	size_t i = reverse ? list->size : SIZE_MAX;
+	while (reverse ? i-- : ++i < list->size)
 	{
 		char *current = (char *)list->array + (i * list->data_size);
 		if ((comparator && comparator(current, object) == 0) || (!comparator && memcmp(current, object, list->data_size) == 0))
@@ -175,7 +175,8 @@ static long long find_element(ArrayList *list, void *object, int (*comparator)(c
 
 int	contains_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
 {
-	return find_element(list, object, comparator, 0) >= 0 ? TRUE : FALSE;
+	long long ret = find_element(list, object, comparator, 0);
+	return ret >= 0 ? TRUE : ret;
 }
 
 long long	index_of_alist(ArrayList *list, void *object, int (*comparator)(const void *, const void *))
